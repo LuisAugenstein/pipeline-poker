@@ -9,6 +9,12 @@ export type PRStatus = {
   status: PRStatusStatus;
   conclusion?: PRStatusConclusion;
 };
+
+/**
+ * clean: The pull request has no conflicts and can be merged.
+ * unstable: The pull request has merge conflicts but can be resolved.
+ * dirty: The pull request has merge conflicts that cannot be resolved.
+ */
 export type MergeableState = 'clean' | 'unstable' | 'dirty';
 
 export class PullRequest {

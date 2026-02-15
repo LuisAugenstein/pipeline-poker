@@ -21,7 +21,7 @@ export class StatusTable extends Table {
       this.push([
         { content: `#${pr.id}`, href: `https://github.com/${pr.owner}/${pr.repo}/pull/${pr.id}` },
         { content: formatPRStatus(pr.status), href: pr.pipelineUrl },
-        pr.mergeableState,
+        formatMergeableState(pr.mergeableState),
         pr.reviewComments?.toString() || '0',
       ]);
     }
