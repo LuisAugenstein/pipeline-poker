@@ -32,7 +32,6 @@ Flaky CI pipelines fail unpredictably, forcing developers to constantly monitor 
            "id": 142,
            "repo": "my-org/my-repo",
            "lastStatus": "failure",
-           "retries": 1,
            "paused": false,
            "lastError": "Unit tests failed"
          }

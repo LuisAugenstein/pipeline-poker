@@ -2,19 +2,23 @@ import { Command } from 'commander';
 import { Octokit } from '@octokit/rest';
 import chalk from 'chalk';
 import { getToken } from '../auth';
+import { getRepoInfo } from '../repo';
 
 export function createPokeCommand(): Command {
   return new Command('poke')
     .description('Manually retrigger a pipeline by merging main into the PR branch')
     .argument('<pr-id>', 'The PR ID to poke')
-    .option('-o, --owner <owner>', 'Repository owner (default: from git remote)')
-    .option('-r, --repo <repo>', 'Repository name (default: from git remote)')
+    .option('-o, --owner <owner>', 'Repository owner')
+    .option('-r, --repo <repo>', 'Repository name')
     .action(async (prId: string, options: { owner?: string; repo?: string }) => {
       const token = await getToken();
 
       const octokit = new Octokit({ auth: token });
 
-      const [owner, repo] = await getRepoInfo(options.owner, options.repo);
+      const { owner, repo} = (options.owner && options.repo)
+        ? { owner: options.owner, repo: options.repo }
+        : await getRepoInfo();
+
 
       try {
         console.log(chalk.white(`Updating PR #${prId} branch...`));
@@ -35,21 +39,4 @@ export function createPokeCommand(): Command {
         }
       }
     });
-}
-
-async function getRepoInfo(cliOwner?: string, cliRepo?: string): Promise<[string, string]> {
-  if (cliOwner && cliRepo) {
-    return [cliOwner, cliRepo];
-  }
-
-  const { execSync } = await import('child_process');
-  const remoteUrl = execSync('git remote get-url origin', { encoding: 'utf8' }).trim();
-  
-  const match = remoteUrl.match(/github\.com[/:]([\w-]+)\/([\w-]+?)(?:\.git)?$/);
-  if (!match) {
-    console.error(chalk.red('Error: Could not determine repo from git remote'));
-    process.exit(1);
-  }
-
-  return [match[1], match[2]];
 }
