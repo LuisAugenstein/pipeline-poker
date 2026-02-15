@@ -42,7 +42,7 @@ async function showStatus(octokit: Octokit): Promise<void> {
   watchlist.save();
 
   for (const [repoFullName, prs] of watchlist.getAllGroupedByRepository()) {
-    console.log(chalk.white.bold(`${repoFullName}\n`));
+    console.log(chalk.white.bold(`${repoFullName}`));
     const table = new StatusTable(prs);
     console.log(table.toString());
     console.log();

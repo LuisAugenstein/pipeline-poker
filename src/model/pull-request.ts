@@ -1,7 +1,21 @@
 import { Octokit } from "@octokit/rest";
 
-export type PRStatus = 'success' | 'failure' | 'pending' | undefined;
-export type MergeableState = 'updated' | 'outdated' | 'conflict' | undefined;
+// see documentation for these types in
+// https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/collaborating-on-repositories-with-code-quality-features/about-status-checks#check-statuses-and-conclusions
+export type PRStatusStatus = 'completed' | 'action_required' | 'cancelled' | 'failure' | 'neutral' | 'skipped' | 'stale' | 'success' | 'timed_out' | 'in_progress' | 'queued' | 'requested' | 'waiting' | 'pending';
+export type PRStatusConclusion = 'action_required' | 'cancelled' | 'failure' | 'neutral' | 'skipped' | 'stale' | 'success' | 'timed_out';
+
+export type PRStatus = {
+  status: PRStatusStatus;
+  conclusion?: PRStatusConclusion;
+};
+
+/**
+ * clean: The pull request has no conflicts and can be merged.
+ * unstable: The pull request has merge conflicts but can be resolved.
+ * dirty: The pull request has merge conflicts that cannot be resolved.
+ */
+export type MergeableState = 'clean' | 'unstable' | 'dirty';
 
 export class PullRequest {
   id: number;
@@ -30,7 +44,6 @@ export class PullRequest {
       owner,
       repo,
       branch: pr.head.ref,
-      status: 'completed',
       per_page: 1,
     });
     const latestRun = statusResponse.data.workflow_runs.length > 0 ? statusResponse.data.workflow_runs[0] : undefined;
@@ -38,7 +51,10 @@ export class PullRequest {
     const pullRequest = new PullRequest(prId, owner, repo);
     pullRequest.mergeableState = pr.mergeable_state as MergeableState;
     pullRequest.pipelineUrl = latestRun?.html_url;
-    pullRequest.status = latestRun?.conclusion as PRStatus;
+    pullRequest.status = {
+      status: latestRun?.status as PRStatusStatus,
+      conclusion: latestRun?.conclusion as PRStatusConclusion,
+    };
     pullRequest.reviewComments = pr.review_comments;
 
     return pullRequest;
