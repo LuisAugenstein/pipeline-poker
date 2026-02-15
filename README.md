@@ -13,7 +13,7 @@ Run `pp login` and follow the device flow to authenticate with GitHub.
 ```bash
 pp login          # Authenticate with GitHub (first time only)
 pp logout         # Clear stored token
-pp poke <pr-id>   # Update PR branch (merge main into feature branch)
+pp poke <pr-id>   # Update PR branch (merge main into PR branch to retrigger the pipelines)
 pp watch <pr-id>  # Add a PR to the watchlist
 pp status         # Show watchlist status
 ```

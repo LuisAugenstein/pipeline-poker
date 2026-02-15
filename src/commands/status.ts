@@ -34,7 +34,6 @@ async function showStatus(octokit: Octokit): Promise<void> {
     const prToUpdate = await PullRequest.loadFromGithub(octokit, pr.id, pr.owner, pr.repo);
     watchlist.update(pr.id, pr.owner, pr.repo, {
       status: prToUpdate.status,
-      mergeableState: prToUpdate.mergeableState,
       pipelineUrl: prToUpdate.pipelineUrl,
       reviewComments: prToUpdate.reviewComments,
     });
@@ -42,7 +41,7 @@ async function showStatus(octokit: Octokit): Promise<void> {
   watchlist.save();
 
   for (const [repoFullName, prs] of watchlist.getAllGroupedByRepository()) {
-    console.log(chalk.white.bold(`${repoFullName}\n`));
+    console.log(chalk.white.bold(`${repoFullName}`));
     const table = new StatusTable(prs);
     console.log(table.toString());
     console.log();
