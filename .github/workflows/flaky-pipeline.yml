@@ -1,0 +1,27 @@
+name: Flaky Test Pipeline
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      should_fail:
+        description: 'Fail the pipeline'
+        required: true
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+jobs:
+  flaky-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check should_fail
+        run: |
+          SHOULD_FAIL="${{ github.event.inputs.should_fail || 'true' }}"
+          if [[ "$SHOULD_FAIL" == "true" ]]; then
+            exit 1
+          fi
+          echo "Pipeline succeeded!"
