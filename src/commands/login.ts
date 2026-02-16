@@ -3,7 +3,7 @@ import { login, logout } from '../auth';
 
 export function createLoginCommand(): Command {
   return new Command('login')
-    .description('Authenticate with GitHub via device flow')
+    .description('Authenticate with GitHub via GITHUB_TOKEN or device flow')
     .action(async () => {
       await login();
     });

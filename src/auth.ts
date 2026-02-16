@@ -6,6 +6,7 @@ import chalk from 'chalk';
 
 const DEVICE_CODE_URL = 'https://github.com/login/device/code';
 const TOKEN_URL = 'https://github.com/login/oauth/access_token';
+const GITHUB_API_URL = 'https://api.github.com';
 const CLIENT_ID = 'Ov23lizFzNwkYjfSEzJw';
 
 interface DeviceFlowResponse {
@@ -24,14 +25,6 @@ interface TokenResponse {
   error_description?: string;
 }
 
-function getConfigDir(): string {
-  return path.join(os.homedir(), '.pipeline-poker');
-}
-
-function getTokenPath(): string {
-  return path.join(getConfigDir(), 'token');
-}
-
 export async function login(): Promise<void> {
   const tokenPath = getTokenPath();
   
@@ -40,6 +33,20 @@ export async function login(): Promise<void> {
     if (existingToken) {
       console.log(chalk.green('Already logged in.'));
       return;
+    }
+  }
+
+  const envToken = process.env.GITHUB_TOKEN;
+  if (envToken) {
+    console.log(chalk.white('Checking GITHUB_TOKEN from environment...\n'));
+    const isValid = await validateToken(envToken);
+    if (isValid) {
+      fs.mkdirSync(getConfigDir(), { recursive: true });
+      fs.writeFileSync(tokenPath, envToken);
+      console.log(chalk.green('Authentication successful! Token from GITHUB_TOKEN environment variable saved.\n'));
+      return;
+    } else {
+      console.log(chalk.yellow('GITHUB_TOKEN is invalid. Falling back to device flow.\n'));
     }
   }
 
@@ -66,6 +73,52 @@ export async function login(): Promise<void> {
   fs.writeFileSync(tokenPath, token);
 
   console.log(chalk.green('Authentication successful! Token saved.\n'));
+}
+
+export async function getToken(): Promise<string> {
+  const tokenPath = getTokenPath();
+  
+  if (fs.existsSync(tokenPath)) {
+    const token = fs.readFileSync(tokenPath, 'utf8').trim();
+    if (token) {
+      return token;
+    }
+  }
+
+  console.error(chalk.red('Not logged in. Run "pp login" to authenticate.'));
+  process.exit(1);
+}
+
+export function logout(): void {
+  const tokenPath = getTokenPath();
+  if (fs.existsSync(tokenPath)) {
+    fs.unlinkSync(tokenPath);
+    console.log(chalk.green('Logged out successfully.'));
+  } else {
+    console.log(chalk.yellow('Not logged in.'));
+  }
+}
+
+function getConfigDir(): string {
+  return path.join(os.homedir(), '.pipeline-poker');
+}
+
+function getTokenPath(): string {
+  return path.join(getConfigDir(), 'token');
+}
+
+async function validateToken(token: string): Promise<boolean> {
+  try {
+    await axios.get(`${GITHUB_API_URL}/user`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github.v3+json',
+      },
+    });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 async function pollForToken(deviceCode: string, interval: number): Promise<string> {
@@ -121,29 +174,5 @@ async function pollForToken(deviceCode: string, interval: number): Promise<strin
 
       throw error;
     }
-  }
-}
-
-export async function getToken(): Promise<string> {
-  const tokenPath = getTokenPath();
-  
-  if (fs.existsSync(tokenPath)) {
-    const token = fs.readFileSync(tokenPath, 'utf8').trim();
-    if (token) {
-      return token;
-    }
-  }
-
-  console.error(chalk.red('Not logged in. Run "pp login" to authenticate.'));
-  process.exit(1);
-}
-
-export function logout(): void {
-  const tokenPath = getTokenPath();
-  if (fs.existsSync(tokenPath)) {
-    fs.unlinkSync(tokenPath);
-    console.log(chalk.green('Logged out successfully.'));
-  } else {
-    console.log(chalk.yellow('Not logged in.'));
   }
 }
